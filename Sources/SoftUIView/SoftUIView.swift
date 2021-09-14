@@ -29,7 +29,7 @@ open class SoftUIView: UIControl {
     }
 
     open func setContentView(_ contentView: UIView?,
-                              selectedContentView: UIView?) {
+                             selectedContentView: UIView?) {
         resetContentView(contentView,
                          selectedContentView: selectedContentView,
                          selectedTransform: nil)
@@ -59,24 +59,12 @@ open class SoftUIView: UIControl {
         didSet { updateMainColor() }
     }
 
-    open var darkShadowColor: CGColor = SoftUIView.defalutDarkShadowColor {
-        didSet { updateDarkShadowColor() }
+    open var lightShadow: ShadowModel = SoftUIView.defaultLightShadow {
+        didSet { self.updateShadows() }
     }
 
-    open var lightShadowColor: CGColor = SoftUIView.defalutLightShadowColor {
-        didSet { updateLightShadowColor() }
-    }
-
-    open var shadowOffset: CGSize = SoftUIView.defalutShadowOffset {
-        didSet { updateShadowOffset() }
-    }
-
-    open var shadowOpacity: Float = SoftUIView.defalutShadowOpacity {
-        didSet { updateShadowOpacity() }
-    }
-
-    open var shadowRadius: CGFloat = SoftUIView.defalutShadowRadius {
-        didSet { updateShadowRadius() }
+    open var darkShadow: ShadowModel = SoftUIView.defaultDarkShadow {
+        didSet { self.updateShadows() }
     }
 
     open var cornerRadius: CGFloat = SoftUIView.defalutCornerRadius {
@@ -101,42 +89,42 @@ open class SoftUIView: UIControl {
 
     open override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         switch type {
-        case .pushButton:
-            isSelected = true
-        case .toggleButton:
-            isSelected = !isSelected
-        case .normal:
-            break
+            case .pushButton:
+                isSelected = true
+            case .toggleButton:
+                isSelected = !isSelected
+            case .normal:
+                break
         }
         super.touchesBegan(touches, with: event)
     }
 
     open override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         switch type {
-        case .pushButton:
-            isSelected = isTracking
-        case .normal, .toggleButton:
-            break
+            case .pushButton:
+                isSelected = isTracking
+            case .normal, .toggleButton:
+                break
         }
         super.touchesMoved(touches, with: event)
     }
 
     open override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         switch type {
-        case .pushButton:
-            isSelected = false
-        case .normal, .toggleButton:
-            break
+            case .pushButton:
+                isSelected = false
+            case .normal, .toggleButton:
+                break
         }
         super.touchesEnded(touches, with: event)
     }
 
     open override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         switch type {
-        case .pushButton:
-            isSelected = false
-        case .normal, .toggleButton:
-            break
+            case .pushButton:
+                isSelected = false
+            case .normal, .toggleButton:
+                break
         }
         super.touchesCancelled(touches, with: event)
     }
@@ -150,19 +138,28 @@ open class SoftUIView: UIControl {
     private var contentView: UIView?
     private var selectedContentView: UIView?
     private var selectedTransform: CGAffineTransform?
-
 }
 
 extension SoftUIView {
+    public struct ShadowModel {
+        public var color: CGColor
+        public var offset: CGSize
+        public var opacity: Float
+        public var radius: CGFloat
+
+        public init(color: CGColor = UIColor.clear.cgColor, offset: CGSize = .zero, opacity: Float = 1, radius: CGFloat = CGFloat.zero) {
+            self.color = color
+            self.offset = offset
+            self.opacity = opacity
+            self.radius = radius
+        }
+    }
 
     public static let defalutMainColorColor: CGColor = #colorLiteral(red: 0.9333333333, green: 0.9333333333, blue: 0.9333333333, alpha: 1)
-    public static let defalutDarkShadowColor: CGColor = #colorLiteral(red: 0.8196078431, green: 0.8039215686, blue: 0.7803921569, alpha: 1)
-    public static let defalutLightShadowColor: CGColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
-    public static let defalutShadowOffset: CGSize = .init(width: 6, height: 6)
-    public static let defalutShadowOpacity: Float = 1
-    public static let defalutShadowRadius: CGFloat = 5
     public static let defalutCornerRadius: CGFloat = 10
 
+    public static let defaultDarkShadow: ShadowModel = ShadowModel(color: #colorLiteral(red: 0.8196078431, green: 0.8039215686, blue: 0.7803921569, alpha: 1), offset: CGSize(width: 6, height: 6), opacity: 1, radius: 5)
+    public static let defaultLightShadow: ShadowModel = ShadowModel(color: #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1), offset: CGSize(width: 6, height: 6), opacity: 1, radius: 5)
 }
 
 private extension SoftUIView {
@@ -170,13 +167,13 @@ private extension SoftUIView {
     func createSubLayers() {
 
         lightOuterShadowLayer = {
-            let shadowLayer = createOuterShadowLayer(shadowColor: lightShadowColor, shadowOffset: shadowOffset.inverse)
+            let shadowLayer = createOuterShadowLayer(shadowModel: self.lightShadow)
             layer.addSublayer(shadowLayer)
             return shadowLayer
         }()
 
         darkOuterShadowLayer = {
-            let shadowLayer = createOuterShadowLayer(shadowColor: darkShadowColor, shadowOffset: shadowOffset)
+            let shadowLayer = createOuterShadowLayer(shadowModel: self.darkShadow)
             layer.addSublayer(shadowLayer)
             return shadowLayer
         }()
@@ -191,14 +188,14 @@ private extension SoftUIView {
         }()
 
         darkInnerShadowLayer = {
-            let shadowLayer = createInnerShadowLayer(shadowColor: darkShadowColor, shadowOffset: shadowOffset)
+            let shadowLayer = createInnerShadowLayer(shadowModel: self.darkShadow)
             layer.addSublayer(shadowLayer)
             shadowLayer.isHidden = true
             return shadowLayer
         }()
 
         lightInnerShadowLayer = {
-            let shadowLayer = createInnerShadowLayer(shadowColor: lightShadowColor, shadowOffset: shadowOffset.inverse)
+            let shadowLayer = createInnerShadowLayer(shadowModel: self.lightShadow)
             layer.addSublayer(shadowLayer)
             shadowLayer.isHidden = true
             return shadowLayer
@@ -207,14 +204,14 @@ private extension SoftUIView {
         updateSublayersShape()
     }
 
-    func createOuterShadowLayer(shadowColor: CGColor, shadowOffset: CGSize) -> CAShapeLayer {
+    func createOuterShadowLayer(shadowModel: ShadowModel) -> CAShapeLayer {
         let layer = CAShapeLayer()
         layer.backgroundColor = UIColor.clear.cgColor
         layer.fillColor = mainColor
-        layer.shadowColor = shadowColor
-        layer.shadowOffset = shadowOffset
-        layer.shadowOpacity = shadowOpacity
-        layer.shadowRadius = shadowRadius
+        layer.shadowColor = shadowModel.color
+        layer.shadowOffset = shadowModel.offset
+        layer.shadowOpacity = shadowModel.opacity
+        layer.shadowRadius = shadowModel.radius
         return layer
     }
 
@@ -222,14 +219,14 @@ private extension SoftUIView {
         return UIBezierPath(roundedRect: bounds, cornerRadius: cornerRadius).cgPath
     }
 
-    func createInnerShadowLayer(shadowColor: CGColor, shadowOffset: CGSize) -> CAShapeLayer {
+    func createInnerShadowLayer(shadowModel: ShadowModel) -> CAShapeLayer {
         let layer = CAShapeLayer()
         layer.backgroundColor = UIColor.clear.cgColor
         layer.fillColor = mainColor
-        layer.shadowColor = shadowColor
-        layer.shadowOffset = shadowOffset
-        layer.shadowOpacity = shadowOpacity
-        layer.shadowRadius = shadowRadius
+        layer.shadowColor = shadowModel.color
+        layer.shadowOffset = shadowModel.offset
+        layer.shadowOpacity = shadowModel.opacity
+        layer.shadowRadius = shadowModel.radius
         layer.fillRule = .evenOdd
         return layer
     }
@@ -322,35 +319,33 @@ private extension SoftUIView {
         lightInnerShadowLayer.fillColor = mainColor
     }
 
-    func updateDarkShadowColor() {
-        darkOuterShadowLayer.shadowColor = darkShadowColor
-        darkInnerShadowLayer.shadowColor = darkShadowColor
+    func updateShadows() {
+        self.updateLightShadows()
+        self.updateDarkShadows()
     }
 
-    func updateLightShadowColor() {
-        lightOuterShadowLayer.shadowColor = lightShadowColor
-        lightInnerShadowLayer.shadowColor = lightShadowColor
+    func updateLightShadows() {
+        self.lightOuterShadowLayer.shadowColor = self.lightShadow.color
+        self.lightOuterShadowLayer.shadowOffset = self.lightShadow.offset
+        self.lightOuterShadowLayer.shadowOpacity = self.lightShadow.opacity
+        self.lightOuterShadowLayer.shadowRadius = self.lightShadow.radius
+
+        self.lightInnerShadowLayer.shadowColor = self.lightShadow.color
+        self.lightInnerShadowLayer.shadowOffset = self.lightShadow.offset
+        self.lightInnerShadowLayer.shadowOpacity = self.lightShadow.opacity
+        self.lightInnerShadowLayer.shadowRadius = self.lightShadow.radius
     }
 
-    func updateShadowOffset() {
-        darkOuterShadowLayer.shadowOffset = shadowOffset
-        lightOuterShadowLayer.shadowOffset = shadowOffset.inverse
-        darkInnerShadowLayer.shadowOffset = shadowOffset
-        lightInnerShadowLayer.shadowOffset = shadowOffset.inverse
-    }
+    func updateDarkShadows() {
+        self.darkOuterShadowLayer.shadowColor = self.darkShadow.color
+        self.darkOuterShadowLayer.shadowOffset = self.darkShadow.offset
+        self.darkOuterShadowLayer.shadowOpacity = self.darkShadow.opacity
+        self.darkOuterShadowLayer.shadowRadius = self.darkShadow.radius
 
-    func updateShadowOpacity() {
-        darkOuterShadowLayer.shadowOpacity = shadowOpacity
-        lightOuterShadowLayer.shadowOpacity = shadowOpacity
-        darkInnerShadowLayer.shadowOpacity = shadowOpacity
-        lightInnerShadowLayer.shadowOpacity = shadowOpacity
-    }
-
-    func updateShadowRadius() {
-        darkOuterShadowLayer.shadowRadius = shadowRadius
-        lightOuterShadowLayer.shadowRadius = shadowRadius
-        darkInnerShadowLayer.shadowRadius = shadowRadius
-        lightInnerShadowLayer.shadowRadius = shadowRadius
+        self.darkInnerShadowLayer.shadowColor = self.darkShadow.color
+        self.darkInnerShadowLayer.shadowOffset = self.darkShadow.offset
+        self.darkInnerShadowLayer.shadowOpacity = self.darkShadow.opacity
+        self.darkInnerShadowLayer.shadowRadius = self.darkShadow.radius
     }
 
     func updateShadowLayers() {
@@ -359,7 +354,6 @@ private extension SoftUIView {
         darkInnerShadowLayer.isHidden = !isSelected
         lightInnerShadowLayer.isHidden = !isSelected
     }
-
 }
 
 extension CGSize {
